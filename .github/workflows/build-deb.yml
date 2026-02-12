@@ -50,7 +50,7 @@ jobs:
           Package: com.security.jailbreakdetector
           Name: Jailbreak Detector
           Version: ${{ steps.version.outputs.VERSION }}
-          Architecture: iphoneos-arm64
+          Architecture: iphoneos-arm
           Description: Advanced jailbreak detection with 8 techniques (OWASP MSTG compliant)
           Homepage: https://github.com/betillogalvanfbc/JailbreakDetection
           Maintainer: Your Name <your@email.com>
@@ -69,15 +69,15 @@ jobs:
       
       - name: Build .deb
         run: |
-          dpkg-deb -b package jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm64.deb
+          dpkg-deb -b package jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm.deb
           
           # Show package info
-          dpkg-deb -I jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm64.deb
+          dpkg-deb -I jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm.deb
       
       - name: Upload to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload v${{ steps.version.outputs.VERSION }} \
-            jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm64.deb \
+            jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm.deb \
             --clobber
