@@ -115,6 +115,22 @@ jobs:
           echo "=== iphoneos-arm64 .deb info ==="
           dpkg-deb -I jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm64.deb
       
+      - name: Wait for Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Waiting for release v${{ steps.version.outputs.VERSION }} to be created..."
+          for i in {1..30}; do
+            if gh release view v${{ steps.version.outputs.VERSION }} >/dev/null 2>&1; then
+              echo "✅ Release found!"
+              exit 0
+            fi
+            echo "Attempt $i: Release not found yet. Waiting 10s..."
+            sleep 10
+          done
+          echo "❌ Release was not created in time."
+          exit 1
+
       - name: Upload both .deb packages to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
