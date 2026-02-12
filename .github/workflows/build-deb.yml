@@ -16,9 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Install dpkg tools
+      - name: Install build tools
         run: |
-          brew install dpkg
+          brew install dpkg ldid
       
       - name: Build app
         run: |
@@ -32,6 +32,18 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_ENTITLEMENTS="JailbreakDetector/JailbreakDetector/JailbreakDetector.entitlements"
+      
+      - name: Fake sign with ldid
+        run: |
+          # Find the app binary
+          APP_PATH="build/JailbreakDetector.xcarchive/Products/Applications/JailbreakDetectorApp.app"
+          BINARY="$APP_PATH/JailbreakDetectorApp"
+          
+          # Fake sign with entitlements
+          ldid -SJailbreakDetector/JailbreakDetector/JailbreakDetector.entitlements "$BINARY"
+          
+          echo "✅ Fake signed app with ldid"
+          ldid -e "$BINARY"
       
       - name: Get version
         id: version
