@@ -1,0 +1,96 @@
+name: JailbreakDetector
+options:
+  bundleIdPrefix: com.security
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: en
+  xcodeVersion: "14.0"
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+
+targets:
+  JailbreakDetector:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: JailbreakDetector/JailbreakDetector
+        excludes:
+          - "*.plist"
+    settings:
+      base:
+        PRODUCT_NAME: JailbreakDetectorApp
+        PRODUCT_MODULE_NAME: JailbreakDetectorApp
+        PRODUCT_BUNDLE_IDENTIFIER: com.security.jailbreakdetector
+        INFOPLIST_FILE: JailbreakDetector/JailbreakDetector/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: YES
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+    entitlements:
+      path: JailbreakDetector/JailbreakDetector.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.security.jailbreakdetector
+    info:
+      path: JailbreakDetector/JailbreakDetector/Info.plist
+      properties:
+        CFBundleDisplayName: "Jailbreak Detector"
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        LSApplicationQueriesSchemes:
+          - cydia
+          - sileo
+          - zbra
+          - filza
+          - activator
+        UILaunchScreen: {}
+    dependencies:
+      - target: JailbreakWidget
+
+  JailbreakWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: JailbreakDetector/JailbreakWidget
+        excludes:
+          - "*.plist"
+    settings:
+      base:
+        PRODUCT_NAME: JailbreakWidget
+        PRODUCT_MODULE_NAME: JailbreakWidgetExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.security.jailbreakdetector.widget
+        INFOPLIST_FILE: JailbreakDetector/JailbreakWidget/Info.plist
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+    entitlements:
+      path: JailbreakDetector/JailbreakWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.security.jailbreakdetector
+    info:
+      path: JailbreakDetector/JailbreakWidget/Info.plist
+      properties:
+        CFBundleDisplayName: "JB Status"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+schemes:
+  JailbreakDetector:
+    build:
+      targets:
+        JailbreakDetector: all
+    run:
+      config: Debug
+    archive:
+      config: Release

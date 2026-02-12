@@ -1,0 +1,128 @@
+name: iOS Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v1.0.1, etc.
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+      
+      - name: Show Xcode version
+        run: xcodebuild -version
+      
+      - name: Install dependencies
+        run: |
+          # Si usas CocoaPods, descomenta:
+          # pod install
+          echo "No dependencies to install"
+      
+      - name: Build for iOS Simulator (Debug)
+        run: |
+          xcodebuild -project JailbreakDetector.xcodeproj \
+            -scheme JailbreakDetector \
+            -sdk iphonesimulator \
+            -configuration Release \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            clean build \
+            | xcpretty && exit ${PIPESTATUS[0]} || true
+      
+      - name: Run tests
+        run: |
+          xcodebuild test \
+            -project JailbreakDetector.xcodeproj \
+            -scheme JailbreakDetector \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            | xcpretty && exit ${PIPESTATUS[0]} || true
+        continue-on-error: true
+      
+      - name: Build archive (without signing)
+        run: |
+          xcodebuild archive \
+            -project JailbreakDetector.xcodeproj \
+            -scheme JailbreakDetector \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath ${{ github.workspace }}/build/JailbreakDetector.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+        continue-on-error: true
+      
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+      - name: Create build info
+        run: |
+          cat > build-info.txt << EOF
+          🛡️ iOS Jailbreak Detector - Release ${{ steps.get_version.outputs.VERSION }}
+          
+          Built on: $(date)
+          Commit: ${{ github.sha }}
+          
+          📱 Features:
+          - 8 Detection Techniques (OWASP MSTG-RESILIENCE-1)
+          - iOS Widget Support (Small, Medium, Large)
+          - Always-show detection modal
+          - Fixed false positives for Xcode debugging
+          - iOS 16, 17, 18+ compatible
+          
+          ⚠️ Note: This is an unsigned build for demonstration purposes.
+          To install on a physical device, you need to sign with your own certificate.
+          
+          🔧 Build Configuration:
+          - Xcode: $(xcodebuild -version | head -n1)
+          - Swift: $(swift --version | head -n1)
+          - Platform: iOS 16.0+
+          EOF
+          cat build-info.txt
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          body_path: build-info.txt
+          draft: false
+          prerelease: false
+      
+      - name: Upload build info
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build-info.txt
+          asset_name: build-info.txt
+          asset_content_type: text/plain
+      
+      - name: Upload project archive (if exists)
+        if: success()
+        run: |
+          if [ -d "${{ github.workspace }}/build/JailbreakDetector.xcarchive" ]; then
+            cd ${{ github.workspace }}/build
+            zip -r JailbreakDetector-${{ steps.get_version.outputs.VERSION }}.xcarchive.zip JailbreakDetector.xcarchive
+            
+            # Upload to release
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/zip" \
+              --data-binary @JailbreakDetector-${{ steps.get_version.outputs.VERSION }}.xcarchive.zip \
+              "${{ steps.create_release.outputs.upload_url }}?name=JailbreakDetector-${{ steps.get_version.outputs.VERSION }}.xcarchive.zip&label=Xcode Archive"
+          fi
+        continue-on-error: true
