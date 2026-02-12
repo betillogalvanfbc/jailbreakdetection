@@ -1,22 +1,27 @@
 Package: com.security.jailbreakdetector
 Name: Jailbreak Detector
-Version: 1.2.0
+Version: 1.2.2
 Architecture: iphoneos-arm
 Description: Advanced jailbreak detection with 8 techniques (OWASP MSTG compliant)
 Homepage: https://github.com/betillogalvanfbc/jailbreakdetection
 Maintainer: Developer
+Author: Developer
 Section: Security
 Depends: firmware (>= 16.0)
-Filename: ./debs/jailbreakdetector_1.2.0_iphoneos-arm.deb
+Filename: ./debs/jailbreakdetector_1.2.2_iphoneos-arm.deb
+Size: 780956
+MD5sum: 3a00fc9713c9240efe950876b4d8a3e0
 
 Package: com.security.jailbreakdetector
 Name: Jailbreak Detector
-Version: 1.2.0
+Version: 1.2.2
 Architecture: iphoneos-arm64
 Description: Advanced jailbreak detection with 8 techniques (OWASP MSTG compliant)
 Homepage: https://github.com/betillogalvanfbc/jailbreakdetection
 Maintainer: Developer
+Author: Developer
 Section: Security
 Depends: firmware (>= 16.0)
-Filename: ./debs/jailbreakdetector_1.2.0_iphoneos-arm64.deb
-
+Filename: ./debs/jailbreakdetector_1.2.2_iphoneos-arm64.deb
+Size: 780956
+MD5sum: de2d80f7f47a0e35c5070bf7e58317ff

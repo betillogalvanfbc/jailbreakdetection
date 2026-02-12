@@ -1,8 +1,13 @@
 Origin: Jailbreak Detector Repo
-Label: Jailbreak Detector  
+Label: Jailbreak Detector
 Suite: stable
 Version: 1.0
 Codename: ios
 Architectures: iphoneos-arm iphoneos-arm64
 Components: main
 Description: Official repository for Jailbreak Detector
+Date: Wed, 12 Feb 2026 06:36:00 +0000
+MD5Sum:
+ 21701f37c11705fe1857634a1bf0a9bc 911 Packages
+ bf0e5be9be705197d5016785ea72d538 371 Packages.gz
+ 1d20a65e60ae20f4a0ccdceaf99cff29 453 Packages.bz2
