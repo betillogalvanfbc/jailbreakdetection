@@ -7,6 +7,5 @@ Homepage: https://github.com/betillogalvanfbc/JailbreakDetection
 Maintainer: Developer
 Section: Security
 Depends: firmware (>= 16.0)
-Size: 2048000
 Filename: ./debs/jailbreakdetector_1.2.0_iphoneos-arm64.deb
 
