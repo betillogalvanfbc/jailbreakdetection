@@ -166,9 +166,11 @@ jobs:
             --clobber
 
       - name: Update Cydia Repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Checkout gh-pages branch to 'repo' directory
-          git clone --branch gh-pages --depth 1 https://github.com/${{ github.repository }}.git repo
+          git clone --branch gh-pages --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git repo
           
           # Copy new debs
           mkdir -p repo/debs
@@ -204,9 +206,9 @@ jobs:
             fi
           done
           
-          # Commit and Push
+          # Commit and Push using git directly
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add -A
-          git commit -m "Update repo for release ${{ steps.version.outputs.VERSION }}" || echo "No changes"
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:gh-pages
+          git commit -m "Update repo for release ${{ steps.version.outputs.VERSION }}" || echo "No changes to commit"
+          git push origin gh-pages
