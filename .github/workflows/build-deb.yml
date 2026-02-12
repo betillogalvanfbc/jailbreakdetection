@@ -16,6 +16,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Install dpkg tools
+        run: |
+          brew install dpkg
+      
       - name: Build app
         run: |
           xcodebuild archive \
