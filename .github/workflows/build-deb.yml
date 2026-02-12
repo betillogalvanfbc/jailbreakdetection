@@ -30,45 +30,27 @@ jobs:
             -archivePath build/JailbreakDetector.xcarchive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_ENTITLEMENTS="JailbreakDetector/JailbreakDetector/JailbreakDetector.entitlements"
+            CODE_SIGNING_ALLOWED=NO
       
       - name: Fake sign with ldid
         run: |
-          # Find the app binary
           APP_PATH="build/JailbreakDetector.xcarchive/Products/Applications/JailbreakDetectorApp.app"
-          BINARY="$APP_PATH/JailbreakDetectorApp"
           
-          # 1. Sign App Extensions (PlugIns) separately FIRST
+          # Sign Widget Extension if exists
           if [ -d "$APP_PATH/PlugIns" ]; then
-            echo "🔌 Signing App Extensions..."
             for EXT in "$APP_PATH/PlugIns"/*.appex; do
               if [ -d "$EXT" ]; then
                 EXT_BINARY="$EXT/$(basename "$EXT" .appex)"
-                EXT_NAME="$(basename "$EXT" .appex)"
-                echo "   - Signing extension: $EXT_NAME"
-                
-                # Check if it's the Widget and use specific entitlements
-                if [[ "$EXT_NAME" == "JailbreakWidget" ]]; then
-                   ldid -SJailbreakDetector/JailbreakWidget/JailbreakWidget.entitlements "$EXT_BINARY"
-                else
-                   # Fallback for other extensions
-                   ldid -S "$EXT_BINARY"
-                fi
+                ldid -SJailbreakDetector/JailbreakWidget/JailbreakWidget.entitlements "$EXT_BINARY" 2>/dev/null || ldid -S "$EXT_BINARY"
+                echo "✅ Signed: $(basename "$EXT")"
               fi
             done
-          else
-             echo "⚠️ No PlugIns directory found - Widget might not be built"
-             # List contents to debug
-             ls -R "$APP_PATH"
           fi
-
-          # 2. Fake sign Main App with entitlements
-          echo "📱 Signing Main App..."
-          ldid -SJailbreakDetector/JailbreakDetector/JailbreakDetector.entitlements "$BINARY"
           
-          echo "✅ Fake signed app and extensions with ldid"
-          ldid -e "$BINARY"
+          # Sign Main App
+          BINARY="$APP_PATH/JailbreakDetectorApp"
+          ldid -SJailbreakDetector/JailbreakDetector/JailbreakDetector.entitlements "$BINARY"
+          echo "✅ Signed main app"
       
       - name: Get version
         id: version
@@ -140,22 +122,6 @@ jobs:
           echo "=== iphoneos-arm64 .deb info ==="
           dpkg-deb -I jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm64.deb
       
-      - name: Wait for Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Waiting for release v${{ steps.version.outputs.VERSION }} to be created..."
-          for i in {1..30}; do
-            if gh release view v${{ steps.version.outputs.VERSION }} >/dev/null 2>&1; then
-              echo "✅ Release found!"
-              exit 0
-            fi
-            echo "Attempt $i: Release not found yet. Waiting 10s..."
-            sleep 10
-          done
-          echo "❌ Release was not created in time."
-          exit 1
-
       - name: Upload both .deb packages to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -164,51 +130,3 @@ jobs:
             jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm.deb \
             jailbreakdetector_${{ steps.version.outputs.VERSION }}_iphoneos-arm64.deb \
             --clobber
-
-      - name: Update Cydia Repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Checkout gh-pages branch to 'repo' directory
-          git clone --branch gh-pages --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git repo
-          
-          # Copy new debs
-          mkdir -p repo/debs
-          cp *.deb repo/debs/
-          
-          # Generate Packages
-          cd repo
-          dpkg-scanpackages -m . /dev/null > Packages
-          
-          # Compress
-          rm -f Packages.gz Packages.bz2
-          gzip -k -f Packages
-          bzip2 -k -f Packages
-          
-          # Update Release file
-          cat > Release << EOF
-          Origin: Jailbreak Detector Repo
-          Label: Jailbreak Detector
-          Suite: stable
-          Version: 1.0
-          Codename: ios
-          Architectures: iphoneos-arm iphoneos-arm64
-          Components: main
-          Description: Official repository for Jailbreak Detector
-          Date: $(date -u '+%a, %d %b %Y %H:%M:%S %z')
-          MD5Sum:
-          EOF
-          
-          # Add checksums
-          for file in Packages Packages.gz Packages.bz2; do
-            if [ -f "$file" ]; then
-              echo " $(md5 -q $file | cut -d ' ' -f1) $(wc -c < $file | xargs) $file" >> Release
-            fi
-          done
-          
-          # Commit and Push using git directly
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add -A
-          git commit -m "Update repo for release ${{ steps.version.outputs.VERSION }}" || echo "No changes to commit"
-          git push origin gh-pages
