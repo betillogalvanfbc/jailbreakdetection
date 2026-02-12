@@ -3,7 +3,7 @@ name: Build Debian Package
 on:
   push:
     tags:
-      - 'v1.0.1'
+      - 'v*'
 
 permissions:
   contents: write
